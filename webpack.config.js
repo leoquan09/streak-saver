@@ -1,6 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: "development",
@@ -18,7 +18,18 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: "./src/template.html",
     }),
-    new FaviconsWebpackPlugin('./src/assets/icon.png')
+    new CopyPlugin({
+      patterns: [
+        { 
+          from: path.resolve(__dirname, "manifest.json"), 
+          to: "manifest.json" 
+        },
+        { 
+          from: path.resolve(__dirname, "src/assets/icon.png"), 
+          to: "icon.png" 
+        },
+      ],
+    }),
   ],
   module: {
     rules: [
@@ -29,6 +40,27 @@ module.exports = {
       {
         test: /\.html$/i,
         loader: "html-loader",
+        options: {
+          sources: {
+            list: [
+              "...",
+              {
+                tag: "link",
+                attribute: "href",
+                type: "src",
+                filter: (tag, attribute, attributes, resourcePath) => {
+                  if (/manifest\.json$/.test(attributes.href)) {
+                    return false;
+                  }
+                  if (/icon\.png$/.test(attributes.href)) {
+                    return false;
+                  }
+                  return true;
+                },
+              },
+            ],
+          },
+        },
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
